@@ -1,0 +1,24 @@
+{
+  "name": "simple-chat-app",
+  "version": "1.0.0",
+  "description": "Simple Chat app built using Node.js &amp; Socket.io",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NoyalBakhtar/SocketChat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NoyalBakhtar/SocketChat/issues"
+  },
+  "homepage": "https://github.com/NoyalBakhtar/SocketChat#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4"
+  }
+}
