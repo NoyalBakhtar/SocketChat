@@ -1,30 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Socket.IO Chat</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>SocketChat</title>
+    <style>body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+  }
+  
+  .chat-container {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+  }
+  
+  .sidebar {
+      width: 250px;
+      padding: 20px;
+      background-color: #ff3f20; /* Updated Sidebar background color to #ff3f20 */
+      color: #fff;
+  }
+  
+  .sidebar h2 {
+      margin-bottom: 10px;
+  }
+  
+  .sidebar ul {
+      list-style: none;
+      padding: 0;
+  }
+  
+  .sidebar li {
+      margin-bottom: 8px;
+      cursor: pointer;
+  }
+  
+  .main-content {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #fff; /* Updated Main content background color to #fff */
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+  }
+  
+  .chat-header {
+      background-color: #ff3f20; /* Updated Chat header background color to #ff3f20 */
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+  }
+  
+  .chat-messages {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 10px;
+  }
+  
+  .message {
+      max-width: 70%;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 8px;
+  }
+  
+  .sent {
+      background-color: #dcf8c6;
+      align-self: flex-end;
+  }
+  
+  .received {
+      background-color: #fff;
+      align-self: flex-start;
+  }
+  
+  .timestamp {
+      font-size: 12px;
+      color: #888;
+      margin-left: 8px;
+  }
+  
+  .chat-input {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: #fff;
+      border-top: 1px solid #ccc;
+  }
+  
+  .chat-input input {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 4px;
+      margin-right: 10px;
+  }
+  
+  .chat-input button {
+      background-color: #ff3f20; /* Updated Button background color to #ff3f20 */
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+  }
+  
+  
+  </style>
+</head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.socket.io/4.1.2/socket.io.min.js"></script>
+    <title>SocketChat</title>
 </head>
 <body>
-  <ul id="messages"></ul>
-  <form id="form" action="">
-    <input id="m" autocomplete="off" /><button>Send</button>
-  </form>
+    <div class="chat-container">
+        <div class="sidebar" id="sidebar">
+            <!-- Sidebar content goes here -->
+            <h2 id="user-name">Your Name</h2>
+        </div>
+        <div class="main-content">
+            <div class="chat-header">
+                <h1>SocketChat</h1>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <!-- Messages will be added dynamically here -->
+            </div>
+            <div class="chat-input">
+                <input type="text" id="message-input" placeholder="Type your message">
+                <button onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const socket = io();
+        let userName = prompt("Please enter your name");
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <script>
-    $(function () {
-      var socket = io();
-      $('form').submit(function(){
-        socket.emit('chat message', $('#m').val());
-        $('#m').val('');
-        return false;
-      });
-      socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
-      });
-    });
-  </script>
+        // If user doesn't enter a name, use a default name
+        if (!userName) {
+            userName = "Guest";
+        }
+
+        // Set the user's name in the sidebar
+        const userNameElement = document.getElementById('user-name');
+        userNameElement.textContent = userName;
+
+        // Function to send a message
+        function sendMessage() {
+            const messageInput = document.getElementById('message-input');
+            const message = messageInput.value.trim();
+
+            if (message !== '') {
+                // Emit a 'chat message' event to the server with both message, sender, and user name
+                socket.emit('chat message', { message, sender: 'sent', userName });
+
+                // Clear the input field
+                messageInput.value = '';
+            }
+        }
+
+        // Listen for 'chat message' event from the server
+        socket.on('chat message', function (data) {
+            // Handle the received message (update the UI, append to chat window, etc.)
+            appendMessage(data.message, data.sender, data.userName);
+        });
+
+        // Function to append a message to the chat window
+        function appendMessage(message, sender, userName) {
+            const chatMessages = document.getElementById('chat-messages');
+            const newMessage = document.createElement('div');
+            newMessage.className = `message ${sender}`;
+            newMessage.innerHTML = `<strong>${userName}</strong>: <p>${message}</p><span class="timestamp">${getCurrentTime()}</span>`;
+
+            chatMessages.appendChild(newMessage);
+
+            // Scroll to the bottom of the chat area to show the latest message
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Function to get the current time in HH:mm format
+        function getCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+    </script>
 </body>
 </html>
+

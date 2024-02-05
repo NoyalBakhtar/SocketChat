@@ -6,25 +6,28 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+// Serve your HTML file
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html');
+    res.sendFile(__dirname + '/index.html');
 });
 
+// Handle socket connections
 io.on('connection', (socket) => {
-  console.log('A user connected');
+    console.log('A user connected');
 
-  // Listen for chat messages
-  socket.on('chat message', (msg) => {
-    io.emit('chat message', msg); // Broadcast the message to all connected clients
-  });
+    // Listen for 'chat message' events from clients
+    socket.on('chat message', (message) => {
+        // Broadcast the message to all connected clients
+        io.emit('chat message', { message, sender: 'sent' });
+    });
 
-  // Handle disconnection
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-  });
+    // Handle disconnection
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+    });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
