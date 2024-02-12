@@ -125,6 +125,8 @@
         <div class="sidebar" id="sidebar">
             <!-- Sidebar content goes here -->
             <h2 id="user-name">Your Name</h2>
+            <h3>Online Users</h3>
+            <ul id="online-users"></ul>
         </div>
         <div class="main-content">
             <div class="chat-header">
@@ -134,65 +136,106 @@
                 <!-- Messages will be added dynamically here -->
             </div>
             <div class="chat-input">
-                <input type="text" id="message-input" placeholder="Type your message">
+                <input type="text" id="message-input" placeholder="Type your message...">
                 <button onclick="sendMessage()">Send</button>
             </div>
         </div>
     </div>
     <script>
-        const socket = io();
-        let userName = prompt("Please enter your name");
+      const socket = io();
+let userName = prompt("Please enter your name");
 
-        // If user doesn't enter a name, use a default name
-        if (!userName) {
-            userName = "Guest";
-        }
+// If the user doesn't enter a name, use a default name
+if (!userName) {
+    userName = "Guest";
+}
 
-        // Set the user's name in the sidebar
-        const userNameElement = document.getElementById('user-name');
-        userNameElement.textContent = userName;
+// Set the user's name in the sidebar
+const userNameElement = document.getElementById('username');
+userNameElement.textContent = userName;
 
-        // Function to send a message
-        function sendMessage() {
-            const messageInput = document.getElementById('message-input');
-            const message = messageInput.value.trim();
+// Replacement mapping for emojis
+const emojiReplacements = {
+    'react': '⚛️',
+    'woah': '😯',
+    'hi': '👋',
+    'lol': '😂',
+    'love': '♥️',
+    'congrats': '🎉',
+    'fire': '🔥',
+    
+};
 
-            if (message !== '') {
-                // Emit a 'chat message' event to the server with both message, sender, and user name
-                socket.emit('chat message', { message, sender: 'sent', userName });
+// Function to replace words with emojis
+function replaceEmojis(message) {
+    Object.keys(emojiReplacements).forEach(word => {
+        const emoji = emojiReplacements[word];
+        const regex = new RegExp(`\\b${word}\\b`, 'gi'); // Match whole word, case-insensitive
+        message = message.replace(regex, emoji);
+    });
+    return message;
+}
 
-                // Clear the input field
-                messageInput.value = '';
-            }
-        }
+// Function to send a message
+function sendMessage() {
+    const messageInput = document.getElementById('message-input');
+    let message = messageInput.value.trim();
 
-        // Listen for 'chat message' event from the server
-        socket.on('chat message', function (data) {
-            // Handle the received message (update the UI, append to chat window, etc.)
-            appendMessage(data.message, data.sender, data.userName);
-        });
+    if (message !== '') {
+        // Replace words with emojis
+        message = replaceEmojis(message);
 
-        // Function to append a message to the chat window
-        function appendMessage(message, sender, userName) {
-            const chatMessages = document.getElementById('chat-messages');
-            const newMessage = document.createElement('div');
-            newMessage.className = `message ${sender}`;
-            newMessage.innerHTML = `<strong>${userName}</strong>: <p>${message}</p><span class="timestamp">${getCurrentTime()}</span>`;
+        // Emit a 'chat message' event to the server with both message, sender, and user name
+        socket.emit('chat message', { message, sender: 'sent', userName });
 
-            chatMessages.appendChild(newMessage);
+        // Clear the input field
+        messageInput.value = '';
+    }
+}
 
-            // Scroll to the bottom of the chat area to show the latest message
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
+// Listen for 'chat message' event from the server
+socket.on('chat message', function (data) {
+    // Handle the received message (update the UI, append to chat window, etc.)
+    appendMessage(data.message, data.sender, data.userName);
+});
 
-        // Function to get the current time in HH:mm format
-        function getCurrentTime() {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            return `${hours}:${minutes}`;
-        }
-    </script>
+// Listen for 'online users' event from the server
+socket.on('online users', function (users) {
+    // Update the online users list in the sidebar
+    const onlineUsersList = document.getElementById('online-users');
+    onlineUsersList.innerHTML = '';
+    users.forEach(user => {
+        const userItem = document.createElement('li');
+        userItem.textContent = user;
+        onlineUsersList.appendChild(userItem);
+    });
+});
+
+// Function to append a message to the chat window
+function appendMessage(message, sender, userName) {
+    const chatMessages = document.getElementById('chat-messages');
+    const newMessage = document.createElement('div');
+    newMessage.className = `message ${sender}`;
+    newMessage.innerHTML = `<strong>${userName}</strong>: <p>${message}</p><span class="timestamp">${getCurrentTime()}</span>`;
+
+    chatMessages.appendChild(newMessage);
+
+    // Scroll to the bottom of the chat area to show the latest message
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Function to get the current time in HH:mm format
+function getCurrentTime() {
+    const now = new Date();
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+}
+
+  </script>
+  
+  
+  
 </body>
 </html>
 
